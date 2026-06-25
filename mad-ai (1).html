@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>$MAD AI — Ask the Mad Dev</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&display=swap');
+
+  :root{
+    --black:#0a0a0a;
+    --paper:#121212;
+    --mad-red:#ff3b30;
+    --mad-green:#39ff14;
+    --bone:#e8e4d8;
+    --line:#2a2a2a;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--black);
+    color:var(--bone);
+    font-family:'Space Mono', monospace;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  /* subtle straightjacket-strap texture in background */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,59,48,0.03) 0px, rgba(255,59,48,0.03) 2px, transparent 2px, transparent 40px);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  header{
+    width:100%;
+    max-width:680px;
+    padding:28px 20px 12px;
+    text-align:center;
+    z-index:1;
+  }
+
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:3px;
+    color:var(--mad-green);
+    text-transform:uppercase;
+  }
+
+  h1{
+    font-family:'Archivo Black', sans-serif;
+    font-size:clamp(32px,8vw,52px);
+    margin:6px 0 4px;
+    letter-spacing:-1px;
+    color:var(--bone);
+    text-shadow: 3px 0 0 var(--mad-red);
+  }
+
+  .sub{
+    font-size:12px;
+    color:#888;
+    margin-bottom:4px;
+  }
+
+  .hold-meter{
+    margin:14px auto 0;
+    max-width:680px;
+    width:calc(100% - 40px);
+    border:1px solid var(--line);
+    background:var(--paper);
+    padding:8px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    font-size:11px;
+    letter-spacing:1px;
+  }
+  .hold-meter .bar{
+    flex:1;
+    margin:0 12px;
+    height:6px;
+    background:#1c1c1c;
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .hold-meter .fill{
+    position:absolute; left:0; top:0; bottom:0;
+    width:100%;
+    background:repeating-linear-gradient(90deg, var(--mad-green) 0 8px, #0a0a0a 8px 10px);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;}
+    50%{opacity:.55;}
+  }
+  .hold-meter .jeet{color:var(--mad-red);}
+  .hold-meter .hodl{color:var(--mad-green);}
+
+  .ticker{
+    width:100%;
+    overflow:hidden;
+    background:var(--mad-red);
+    border-top:1px solid #000;
+    border-bottom:1px solid #000;
+    margin-top:12px;
+    z-index:1;
+  }
+  .ticker-track{
+    display:flex;
+    white-space:nowrap;
+    animation: scroll-left 9s linear infinite;
+  }
+  .ticker-track span{
+    font-family:'Archivo Black', sans-serif;
+    font-size:14px;
+    letter-spacing:2px;
+    color:#0a0a0a;
+    padding:8px 24px;
+    flex-shrink:0;
+  }
+  @keyframes scroll-left{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(-50%);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticker-track{animation:none;}
+  }
+
+  main{
+    flex:1;
+    width:100%;
+    max-width:680px;
+    padding:16px 20px 0;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+  }
+
+  #chat{
+    flex:1;
+    min-height:50vh;
+    max-height:60vh;
+    overflow-y:auto;
+    border:1px solid var(--line);
+    background:var(--paper);
+    padding:16px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .msg{
+    max-width:88%;
+    padding:10px 14px;
+    font-size:14px;
+    line-height:1.5;
+    border:1px solid var(--line);
+    white-space:pre-wrap;
+  }
+  .msg.user{
+    align-self:flex-end;
+    background:#1a1a1a;
+    border-color:#333;
+    color:var(--bone);
+  }
+  .msg.ai{
+    align-self:flex-start;
+    background:#0e0e0e;
+    border-color:var(--mad-green);
+    color:var(--bone);
+  }
+  .msg.ai .tag{
+    display:block;
+    font-size:10px;
+    color:var(--mad-green);
+    letter-spacing:2px;
+    margin-bottom:4px;
+  }
+  .msg.error{
+    align-self:flex-start;
+    border-color:var(--mad-red);
+    color:var(--mad-red);
+  }
+  .typing{
+    align-self:flex-start;
+    font-size:12px;
+    color:#777;
+    letter-spacing:1px;
+  }
+
+  form{
+    display:flex;
+    gap:8px;
+    margin:14px 0 24px;
+  }
+  input[type=text]{
+    flex:1;
+    background:var(--paper);
+    border:1px solid var(--line);
+    color:var(--bone);
+    padding:12px 14px;
+    font-family:'Space Mono', monospace;
+    font-size:14px;
+  }
+  input[type=text]:focus{
+    outline:none;
+    border-color:var(--mad-green);
+  }
+  button{
+    background:var(--mad-red);
+    color:#0a0a0a;
+    border:none;
+    padding:0 20px;
+    font-family:'Archivo Black', sans-serif;
+    font-size:13px;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:transform .1s ease;
+  }
+  button:hover{transform:translateY(-1px);}
+  button:disabled{opacity:.5; cursor:not-allowed;}
+
+  footer{
+    width:100%;
+    text-align:center;
+    font-size:11px;
+    color:#555;
+    padding:0 20px 28px;
+    z-index:1;
+  }
+  footer strong{color:var(--mad-red);}
+
+  #chat::-webkit-scrollbar{width:6px;}
+  #chat::-webkit-scrollbar-thumb{background:var(--line);}
+
+  @media (prefers-reduced-motion: reduce){
+    .hold-meter .fill{animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">ASK THE MAD DEV</div>
+  <h1>$MAD AI</h1>
+  <div class="sub">no jeets allowed in this padded cell</div>
+</header>
+
+<div class="hold-meter">
+  <span class="jeet">JEET</span>
+  <div class="bar"><div class="fill"></div></div>
+  <span class="hodl">HODL</span>
+</div>
+
+<div class="ticker">
+  <div class="ticker-track">
+    <span>HOLD $MAD</span><span>DON'T JEET</span><span>HOLD $MAD</span><span>DON'T JEET</span><span>HOLD $MAD</span><span>DON'T JEET</span>
+    <span>HOLD $MAD</span><span>DON'T JEET</span><span>HOLD $MAD</span><span>DON'T JEET</span><span>HOLD $MAD</span><span>DON'T JEET</span>
+  </div>
+</div>
+
+<main>
+  <div id="chat">
+    <div class="msg ai"><span class="tag">$MAD AI</span>Yo. Ask me anything about $MAD — the community, the vibe, the mission. Just know one rule going in: HOLD $MAD, DON'T JEET. What's on your mind?</div>
+  </div>
+  <form id="form">
+    <input type="text" id="input" placeholder="Ask about $MAD..." autocomplete="off" />
+    <button type="submit" id="send">SEND</button>
+  </form>
+</main>
+
+<script>
+const chat = document.getElementById('chat');
+const form = document.getElementById('form');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+
+function addMessage(text, role){
+  const div = document.createElement('div');
+  div.className = 'msg ' + role;
+  if(role === 'ai'){
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = '$MAD AI';
+    div.appendChild(tag);
+    div.appendChild(document.createTextNode(text));
+  } else {
+    div.textContent = text;
+  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function addTyping(){
+  const div = document.createElement('div');
+  div.className = 'typing';
+  div.textContent = '$MAD AI is typing...';
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+const MAD_CONTRACT = "Fa7ZE9nCEYnrHsnoeHuhEExJpchtrBtKXnWe6CgHpump";
+const DEXSCREENER_API = `https://api.dexscreener.com/token-pairs/v1/solana/${MAD_CONTRACT}`;
+
+function fmtUsd(n){
+  const num = Number(n);
+  if(isNaN(num)) return null;
+  if(num >= 1000000) return '$' + (num/1000000).toFixed(2) + 'M';
+  if(num >= 1000) return '$' + (num/1000).toFixed(2) + 'K';
+  return '$' + num.toFixed(num < 1 ? 6 : 2);
+}
+
+async function getLivePriceData(){
+  try{
+    const res = await fetch(DEXSCREENER_API);
+    if(!res.ok) throw new Error('bad status');
+    const data = await res.json();
+    const pair = Array.isArray(data) ? data[0] : (data.pairs ? data.pairs[0] : null);
+    if(!pair) return null;
+    return {
+      price: pair.priceUsd ? fmtUsd(pair.priceUsd) : null,
+      marketCap: pair.marketCap ? fmtUsd(pair.marketCap) : (pair.fdv ? fmtUsd(pair.fdv) : null),
+      volume24h: pair.volume && pair.volume.h24 ? fmtUsd(pair.volume.h24) : null,
+      liquidity: pair.liquidity && pair.liquidity.usd ? fmtUsd(pair.liquidity.usd) : null,
+      change24h: pair.priceChange && pair.priceChange.h24 != null ? pair.priceChange.h24 : null
+    };
+  } catch(err){
+    console.error('Price fetch error:', err);
+    return null;
+  }
+}
+
+// Rule-based $MAD knowledge base — built from real facts on madrichclub.com (fully offline, no API needed)
+const RULES = [
+  {
+    keys: ['sell', 'jeet', 'dump', 'cash out', 'should i sell'],
+    replies: [
+      "Sell? In THIS economy? Strap back in. HOLD $MAD, DON'T JEET.",
+      "Bro the paper hands are showing. Zoom out — 50% of supply is already burned and we're heading to 200M. HOLD $MAD, DON'T JEET.",
+      "That's jeet talk and we don't do that here. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['price', 'worth', 'value', 'market cap', 'chart', 'volume', 'liquidity'],
+    live: true
+  },
+  {
+    keys: ['contract', 'address', 'ca', 'token address'],
+    replies: [
+      "Official Solana contract: Fa7ZE9nCEYnrHsnoeHuhEExJpchtrBtKXnWe6CgHpump — always verify against madrichclub.com before trusting any CA posted in chat."
+    ]
+  },
+  {
+    keys: ['buy', 'how do i get', 'where to buy', 'purchase'],
+    replies: [
+      "You can swap for $MAD on Jupiter, OKX DEX, Gate, or MEXC — links are all on madrichclub.com. Contract: Fa7ZE9nCEYnrHsnoeHuhEExJpchtrBtKXnWe6CgHpump. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['who are you', 'what are you', 'what is this'],
+    replies: [
+      "I'm $MAD AI — the unhinged hype voice of the $MAD community. My job is simple: keep the vibe up and remind everyone — HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['what is mad', "what's mad", 'about mad', 'tell me about mad', 'meaning'],
+    replies: [
+      "$MAD stands for Motivation, Alignment & Discipline. It's a Solana memecoin built on fair launch — no presale, no VC, no tax — with a doxxed dev and a real community behind it. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['supply', 'burn', 'tokenomics', 'tax'],
+    replies: [
+      "1B total supply at launch, already 50% burned (~500M left). Burn #2 drops it to a final 200M once we hit 10,000 holders. 0% tax on every trade. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['holders', 'how many holders'],
+    replies: [
+      "273 holders and growing as of the last count on madrichclub.com — Burn #2 triggers automatically at 10,000 holders. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['dev', 'founder', 'who made', 'team', 'doxxed'],
+    replies: [
+      "The dev is doxxed — goes by $MAD Dev, also known as Coffee Collects, active on X at @madrichclub_. Not a LARP, not anonymous. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['community lock', 'locked', 'communities', 'alliance'],
+    replies: [
+      "$MAD has publicly supported and locked tokens for 7 different communities until 2060 — $DERPYDAVE, $RNDY, $TOUCHGRASS, $HINEY, $KOINZ, $STASH, and $TLLT. Receipts are posted on X. Loyalty proven before trust asked."
+    ]
+  },
+  {
+    keys: ['game', 'roblox'],
+    replies: [
+      "There's a real Roblox game with $MAD integration called Mad Phonk Awakening — playable now, linked on madrichclub.com. Not vaporware. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['roadmap', 'mile', 'progress', 'milestone'],
+    replies: [
+      "Roadmap runs Mile 0 to Mile 100 — Proof of Conviction, Proof of Loyalty, Proof of Utility, Proof of Scale. We're at 70% complete, Mile 7 of 10, with Burn #2 and CEX listings up next at Mile 100."
+    ]
+  },
+  {
+    keys: ['mad mind', 'numerology', 'quiz', 'archetype', 'frequency meter', 'bag calculator'],
+    replies: [
+      "MAD Mind AI has 4 live tools at madrichclub.com/mad-mind: a Numerology Oracle, an Archetype Quiz, a Frequency Meter, and a Bag Calculator. Go check your $MAD frequency."
+    ]
+  },
+  {
+    keys: ['merch', 'hat', 'clothing', 'shop'],
+    replies: [
+      "Yeah, real $MAD merch exists — shop it at madrichclub.com/merch. People genuinely rock the gear, it's not just memes."
+    ]
+  },
+  {
+    keys: ['telegram', 'discord', 'social', 'twitter', 'x.com', 'instagram', 'tiktok'],
+    replies: [
+      "Official channels: Telegram t.me/MadRichClub, X @madrichclub_, Instagram and TikTok @madrichclub. Always verify links from madrichclub.com directly."
+    ]
+  },
+  {
+    keys: ['hold', 'hodl', 'diamond hands'],
+    replies: [
+      "Now THAT'S the energy I'm here for. Diamond hands only. HOLD $MAD, DON'T JEET.",
+      "Say it louder for the jeets in the back: HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['scam', 'rug', 'ponzi'],
+    replies: [
+      "Fair launch, no presale, no VC, 0% tax, doxxed dev, locked tokens with public proof on X — that's the opposite of a rug playbook. Still, always DYOR. HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['advice', 'financial', 'invest', 'should i buy'],
+    replies: [
+      "Real talk: I'm not a licensed financial advisor and this isn't financial advice. $MAD is a speculative meme coin — only risk what you can afford to lose, and DYOR. What I will say with full confidence: HOLD $MAD, DON'T JEET."
+    ]
+  },
+  {
+    keys: ['hi', 'hello', 'hey', 'sup', 'yo'],
+    replies: [
+      "Yo! Welcome to the padded cell. Ask me anything about $MAD — and remember the house rule: HOLD $MAD, DON'T JEET.",
+      "Hey hey. You found the $MAD AI. Ask away — just know HOLD $MAD, DON'T JEET is non-negotiable around here."
+    ]
+  },
+  {
+    keys: ['thank', 'thanks'],
+    replies: [
+      "Anytime, fam. Stay strapped in. HOLD $MAD, DON'T JEET."
+    ]
+  }
+];
+
+const FALLBACKS = [
+  "Not sure on the specifics there — check madrichclub.com for the full picture. But here's what I know for certain: HOLD $MAD, DON'T JEET.",
+  "I'm a hype bot working off the official site's facts, not an oracle — but one thing's universal truth: HOLD $MAD, DON'T JEET.",
+  "Ask the community channels (@madrichclub_ on X, t.me/MadRichClub) for the deep details. Meanwhile, the house rule stands: HOLD $MAD, DON'T JEET."
+];
+
+function findRule(userText){
+  const lower = userText.toLowerCase();
+  for(const rule of RULES){
+    if(rule.keys.some(k => lower.includes(k))){
+      return rule;
+    }
+  }
+  return null;
+}
+
+function getReply(rule){
+  const pool = rule.replies;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getFallback(){
+  return FALLBACKS[Math.floor(Math.random() * FALLBACKS.length)];
+}
+
+async function askMad(userText){
+  sendBtn.disabled = true;
+  const typingEl = addTyping();
+
+  const rule = findRule(userText);
+
+  if(rule && rule.live){
+    const liveData = await getLivePriceData();
+    typingEl.remove();
+    if(liveData && (liveData.price || liveData.marketCap)){
+      let reply = "Live from DexScreener — ";
+      const parts = [];
+      if(liveData.price) parts.push(`price: ${liveData.price}`);
+      if(liveData.marketCap) parts.push(`market cap: ${liveData.marketCap}`);
+      if(liveData.volume24h) parts.push(`24h volume: ${liveData.volume24h}`);
+      if(liveData.change24h != null) parts.push(`24h change: ${liveData.change24h > 0 ? '+' : ''}${liveData.change24h}%`);
+      reply += parts.join(', ') + ". HOLD $MAD, DON'T JEET.";
+      addMessage(reply, 'ai');
+    } else {
+      addMessage("Couldn't pull live price data just now — check madrichclub.com or DexScreener directly. Either way: HOLD $MAD, DON'T JEET.", 'ai');
+    }
+    sendBtn.disabled = false;
+    return;
+  }
+
+  const delay = 500 + Math.random() * 700;
+  setTimeout(() => {
+    typingEl.remove();
+    addMessage(rule ? getReply(rule) : getFallback(), 'ai');
+    sendBtn.disabled = false;
+  }, delay);
+}
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if(!text) return;
+  addMessage(text, 'user');
+  input.value = '';
+  askMad(text);
+});
+</script>
+
+</body>
+</html>
